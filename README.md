@@ -63,26 +63,7 @@ File -> Description
 
 ---
 
-## 🚀 How to run
-
-```bash
-# 1) install deps
-pip install -r requirements.txt
-
-# 2) train the VAE
-python train/train_vae.py --epochs 10
-
-# 3) plot training curves & reconstructions
-python utils/plot.py
-
-# (future)
-# 4) build k‑NN graph & geodesic quantisation
-# python train/train_geodesic.py
-```
-
----
-
-## 📊 Metrics logged
+## Metrics logged
 
 - **ELBO** (total loss)  
 - **BCE** reconstruction loss  
@@ -91,14 +72,7 @@ python utils/plot.py
 
 ---
 
-## 👥 Contributors
-
-- **Ana** — VAE implementation, theory review, documentation.  
-- **Darío** — Geodesic clustering, codebook quantisation (upcoming).
-
----
-
-## 📚 References
+## References
 
 - Tenenbaum *et al.*, **Isomap** (2000)  
 - van den Oord *et al.*, **VQ‑VAE** (2017)  
