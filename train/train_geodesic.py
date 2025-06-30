@@ -1,34 +1,39 @@
 # train/train_geodesic.py
-from pathlib import Path
-import sys
+import sys, os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 import os
+import torch
 import numpy as np
+from utils.graph_tools import compute_geodesic_distances, geodesic_kmeans
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from utils.graph_tools import load_latents, build_knn_graph, compute_geodesic_distances, geodesic_kmeans
-
-ROOT = Path(__file__).resolve().parent.parent
-LATENTS_PATH = ROOT / "experiments" / "latent-spaces" / "latents.pt"
-LABELS_PATH = ROOT / "experiments" / "latent-spaces" / "geodesic_labels.npy"
-CENTROIDS_PATH = ROOT / "experiments" / "latent-spaces" / "geodesic_centroids.npy"
-
-K = 10
+# Config
+LATENTS_PATH = "experiments/latent-spaces/latents.pt"
+LABELS_OUT = "experiments/latent-spaces/geodesic_labels.npy"
+CENTROIDS_OUT = "experiments/latent-spaces/geodesic_centroids.npy"
 N_CLUSTERS = 10
+N_NEIGHBORS = 10
+N_SAMPLES = 1000  # Reduce if memory is a problem
 
-print("Loading latent vectors...")
-latents = load_latents(LATENTS_PATH)
+# Load latent vectors
+print("🔹 Loading latent vectors...")
+latents = torch.load(LATENTS_PATH)
+if torch.is_tensor(latents):
+    latents = latents.numpy()
 
-print("Building k-NN graph...")
-graph = build_knn_graph(latents, k=K)
+latents = latents[:N_SAMPLES]
+print(f"Latents shape: {latents.shape}")
 
-print("Computing geodesic distance matrix...")
-D = compute_geodesic_distances(graph)
+# Compute geodesic distances
+D = compute_geodesic_distances(latents, n_neighbors=N_NEIGHBORS)
 
-print("Running geodesic K-means...")
+# Run geodesic K-means
 labels, centroids = geodesic_kmeans(D, n_clusters=N_CLUSTERS)
 
-print("Saving results...")
-np.save(LABELS_PATH, labels)
-np.save(CENTROIDS_PATH, centroids)
+# Save outputs
+print("🔹 Saving clustering results...")
+os.makedirs(os.path.dirname(LABELS_OUT), exist_ok=True)
+np.save(LABELS_OUT, labels)
+np.save(CENTROIDS_OUT, centroids)
 
-print("Done.")
+print("✅ Done.")
