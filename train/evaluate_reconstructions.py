@@ -52,7 +52,7 @@ for i in range(10):
 axs[0, 0].set_ylabel("Original", fontsize=12)
 axs[1, 0].set_ylabel("Reconstructed", fontsize=12)
 plt.tight_layout()
-plt.savefig(os.path.join(save_dir, "reconstruction_example.png"))
+plt.savefig("experiments/reconstructions/reconstruction_example.png")
 plt.close()
 
 # Compute MSE (reconstruction loss)
