@@ -1,20 +1,23 @@
-# train/generate_codes.py
 import os
 import numpy as np
 import torch
 import torch.nn as nn
+from tqdm import tqdm
 
-# Config
+# Configuration
+LABELS_PATH = "experiments/latent-spaces/geodesic_labels.npy"
 MODEL_PATH = "models/autoregressive_model.pt"
-OUT_PATH = "experiments/latent-spaces/generated_codes.npy"
-SEQ_LEN = 32
-N_CLASSES = 10
+OUTPUT_PATH = "experiments/latent-spaces/generated_codes.npy"
+
+SEQ_LEN = 16         # Context length used during training
+GENERATE_LEN = 32    # Number of new tokens to generate
+NUM_CLASSES = 10     # Number of discrete codes
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# Modelo autoregresivo (debe coincidir con train_autoregressive.py)
+# Autoregressive model (same as used for training)
 class CodeRNN(nn.Module):
-    def __init__(self, vocab_size, embed_dim, hidden_dim):
+    def __init__(self, vocab_size, embed_dim=32, hidden_dim=128):
         super().__init__()
         self.embed = nn.Embedding(vocab_size, embed_dim)
         self.rnn = nn.GRU(embed_dim, hidden_dim, batch_first=True)
@@ -23,27 +26,31 @@ class CodeRNN(nn.Module):
     def forward(self, x):
         x = self.embed(x)
         _, h = self.rnn(x)
-        out = self.fc(h.squeeze(0))
-        return out
+        return self.fc(h.squeeze(0))
 
-# Instanciar y cargar modelo
-model = CodeRNN(vocab_size=N_CLASSES, embed_dim=64, hidden_dim=128).to(device)
+# Load the trained model
+model = CodeRNN(NUM_CLASSES).to(device)
 model.load_state_dict(torch.load(MODEL_PATH, map_location=device))
 model.eval()
 
-# Secuencia inicial (semilla)
-generated = [np.random.randint(0, N_CLASSES)]  # seed aleatorio
+# Load initial seed from real data
+labels = np.load(LABELS_PATH)
+seed = labels[:SEQ_LEN].tolist()  # Use the first tokens as starting context
 
-# Generar códigos uno a uno
-for _ in range(SEQ_LEN - 1):
-    input_seq = torch.tensor(generated[-32:], dtype=torch.long).unsqueeze(0).to(device)
+generated = seed.copy()
+
+print("Generating new token sequence...")
+for _ in tqdm(range(GENERATE_LEN)):
+    context = torch.tensor([generated[-SEQ_LEN:]], dtype=torch.long).to(device)
     with torch.no_grad():
-        logits = model(input_seq)
+        logits = model(context)
         probs = torch.softmax(logits, dim=-1)
         next_token = torch.multinomial(probs, num_samples=1).item()
-    generated.append(next_token)
+        generated.append(next_token)
 
-# Guardar códigos generados
-os.makedirs(os.path.dirname(OUT_PATH), exist_ok=True)
-np.save(OUT_PATH, np.array(generated))
-print(f"Generated codes saved to {OUT_PATH}")
+# Save generated tokens (excluding seed)
+generated = np.array(generated[SEQ_LEN:])
+os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
+np.save(OUTPUT_PATH, generated)
+print(f"Generated codes saved to: {OUTPUT_PATH}")
+
