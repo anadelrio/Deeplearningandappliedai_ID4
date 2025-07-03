@@ -12,7 +12,7 @@ The goal is to evaluate whether this strategy yields better discrete representat
 ├── data.zip                           # zipped raw MNIST
 ├── requirements.txt                   # Python dependencies
 │
-├── experiments/                       # ★ artefacts produced by running code
+├── experiments/                       # artefacts produced by running code
 │   ├── checkpoints/                   # saved model weights
 │   │   ├── vae_mnist.pt               # trained VAE
 │   │   ├── vqvae_mnist.pt             # trained VQ-VAE
