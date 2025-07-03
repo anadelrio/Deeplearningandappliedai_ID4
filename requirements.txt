@@ -1,7 +1,0 @@
-torch
-torchvision
-matplotlib
-numpy
-scikit-learn
-networkx
-tqdm
